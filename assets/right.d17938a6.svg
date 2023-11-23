@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="141px" height="123px" viewBox="0 0 141 123" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Combined Shape Copy 7</title>
+    <defs>
+        <path d="M56,18 L17,61.5 L56,105 M24.454918,61.5 L122.5,61.5" id="path-1"></path>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" stroke-linecap="round" stroke-linejoin="round">
+        <g id="Combined-Shape-Copy-7" transform="translate(70.000000, 61.500000) scale(-1, 1) translate(-70.000000, -61.500000) ">
+            <use stroke="#FFB673" stroke-width="35" xlink:href="#path-1"></use>
+            <use stroke="#FFE8DA" stroke-width="15" xlink:href="#path-1"></use>
+        </g>
+    </g>
+</svg>
