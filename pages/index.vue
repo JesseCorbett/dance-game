@@ -54,10 +54,6 @@ import type { Chart } from "~/models/charts";
 const chart = ref<Chart | null>(null);
 const difficulty = ref<number>(0);
 
-// onMounted(async () => {
-//   chart.value = await convertFromSSC("/Notice Me Benpai/No title/No title.ssc");
-// });
-
 type ChartFile = {
   chart: Chart;
   path: string;
@@ -69,6 +65,8 @@ let files = null as FileList | null;
 
 async function uploadCharts(event: Event) {
   charts.value = [];
+  chart.value = null;
+  difficulty.value = 0;
   files = (event.target as HTMLInputElement).files;
   await parseCharts();
 }
@@ -88,21 +86,81 @@ async function parseCharts() {
 
 async function parseChart(file: File): Promise<ChartFile | null> {
   if (file.name.endsWith(".ssc")) {
+    const chart = await convertFromSSC(file);
+    mapUrlsToFiles(chart);
     return {
-      chart: await convertFromSSC(file),
+      chart,
       path: file.webkitRelativePath,
       format: "ssc",
     };
   }
 
   if (file.name.endsWith(".sm")) {
+    const chart = await convertFromSM(file);
+    mapUrlsToFiles(chart);
     return {
-      chart: await convertFromSM(file),
+      chart,
       path: file.webkitRelativePath,
       format: "sm",
     };
   }
 
+  return null;
+}
+
+function mapUrlsToFiles(chart: Chart) {
+  try {
+    chart.songUrl = window.URL.createObjectURL(findFile(chart.songUrl)!);
+  } catch (e) {
+    alert("Chart: " + chart.title + " failed to load song");
+  }
+
+  try {
+    if (chart.backgroundUrl) {
+      chart.backgroundUrl = window.URL.createObjectURL(
+        findFile(chart.backgroundUrl)!
+      );
+    }
+  } catch (e) {
+    alert("Chart: " + chart.title + " failed to load background");
+  }
+
+  try {
+    if (chart.bannerUrl) {
+      chart.bannerUrl = window.URL.createObjectURL(findFile(chart.bannerUrl)!);
+    }
+  } catch (e) {
+    console.error("Chart: " + chart.title + " failed to load banner");
+  }
+
+  try {
+    if (chart.lyricsUrl) {
+      chart.lyricsUrl = window.URL.createObjectURL(findFile(chart.lyricsUrl)!);
+    }
+  } catch (e) {
+    console.error("Chart: " + chart.title + " failed to load lyrics");
+  }
+
+  try {
+    if (chart.cdCoverUrl) {
+      chart.cdCoverUrl = window.URL.createObjectURL(
+        findFile(chart.cdCoverUrl)!
+      );
+    }
+  } catch (e) {
+    console.error(
+      "Chart: " + chart.title + " failed to load cd cover " + chart.cdCoverUrl
+    );
+  }
+}
+
+function findFile(path: string): File | null {
+  for (let i = 0; i < files!.length; i++) {
+    const file = files!.item(i)!;
+    if (file.webkitRelativePath === path) {
+      return file;
+    }
+  }
   return null;
 }
 
