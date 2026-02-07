@@ -1,11 +1,11 @@
 <template>
   <div class="relative">
-    <level
+    <Level
       class="fixed top-0 bottom-0 left-0 right-0"
       v-if="chart"
       :chart="chart"
       :difficulty="difficulty"
-    ></level>
+    ></Level>
 
     <div
       class="fixed top-0 bottom-0 right-0 overflow-y-auto p-2 text-sm text-white"
@@ -37,7 +37,7 @@
             :key="diff.label"
             @click="openChart(chart, idx)"
           >
-            {{ diff.label }}
+            {{ diff.label || 'Default' }}
           </span>
         </div>
       </div>
@@ -85,6 +85,7 @@ async function parseCharts() {
 }
 
 async function parseChart(file: File): Promise<ChartFile | null> {
+  console.log("Parsing " + file.name);
   if (file.name.endsWith(".ssc")) {
     const chart = await convertFromSSC(file);
     mapUrlsToFiles(chart);
