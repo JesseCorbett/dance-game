@@ -71,13 +71,13 @@ async function loadDefaultCharts() {
   const defaultCharts = [
     {
       name: "Espresso",
-      path: "chart/Espresso/",
+      path: "/dance-game/chart/Espresso/",
       file: "chart.ssc",
       format: "ssc" as const,
     },
     {
       name: "Suki Suki Daisuki",
-      path: "chart/Suki Suki Daisuki/",
+      path: "/dance-game/chart/Suki Suki Daisuki/",
       file: "chart.ssc",
       format: "ssc" as const,
     },
