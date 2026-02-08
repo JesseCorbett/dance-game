@@ -28,7 +28,7 @@
       <div v-for="chart in charts" :key="chart.path" class="my-2">
         <hr />
         <div class="font-semibold">
-          {{ chart.chart.title }}.{{ chart.format }}
+          {{ chart.chart.title }}
         </div>
         <div class="flex gap-1">
           <span
@@ -71,13 +71,13 @@ async function loadDefaultCharts() {
   const defaultCharts = [
     {
       name: "Espresso",
-      path: "/dance-game/chart/Espresso/",
+      path: "https://jessecorbett.github.io/dance-game/chart/Espresso/",
       file: "chart.ssc",
       format: "ssc" as const,
     },
     {
       name: "Suki Suki Daisuki",
-      path: "/dance-game/chart/Suki Suki Daisuki/",
+      path: "https://jessecorbett.github.io/dance-game/chart/Suki Suki Daisuki/",
       file: "chart.ssc",
       format: "ssc" as const,
     },
