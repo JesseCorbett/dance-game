@@ -90,10 +90,10 @@ async function loadDefaultCharts() {
       let parsedChart: Chart;
 
       if (info.format === "ssc") {
-        parsedChart = parseSSC(text, '/');
+        parsedChart = parseSSC(text, '');
       } else {
         // Fallback or expansion for sm if needed
-        parsedChart = parseSM(text, '/');
+        parsedChart = parseSM(text, '');
       }
 
       charts.value.push({
