@@ -6,7 +6,15 @@ export default defineNuxtConfig({
   modules: ["@pinia/nuxt", "@vueuse/nuxt", "@nuxtjs/tailwindcss"],
 
   app: {
-    baseURL: "/", // baseURL: '/<repository>/'
+    baseURL: "/",
     buildAssetsDir: "assets", // don't use "_" at the begining of the folder name to avoids nojkill conflict
+    head: {
+      title: 'Spider Karaoke',
+      meta: [
+        { property: 'og:title', content: 'Spider Karaoke' },
+        { property: 'og:description', content: 'Dance along to Gomi\'s songs' },
+        { name: 'description', content: 'Dance along to Gomi\'s songs' }
+      ]
+    }
   },
 });
