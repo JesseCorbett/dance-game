@@ -8,125 +8,73 @@
         :src="chart.backgroundUrl"
       />
 
-      <img
-        ref="left"
-        class="hidden"
-        alt="left arrow"
-        src="~/assets/themes/default/left.svg"
-        loading="eager"
-      />
-      <img
-        ref="down"
-        class="hidden"
-        alt="down arrow"
-        src="~/assets/themes/default/down.svg"
-        loading="eager"
-      />
-      <img
-        ref="up"
-        class="hidden"
-        alt="up arrow"
-        src="~/assets/themes/default/up.svg"
-        loading="eager"
-      />
-      <img
-        ref="right"
-        class="hidden"
-        alt="right arrow"
-        src="~/assets/themes/default/right.svg"
-        loading="eager"
-      />
+      <!-- Preload Icons -->
+      <img ref="left" class="hidden" alt="left arrow" src="~/assets/themes/default/left.svg" loading="eager" />
+      <img ref="down" class="hidden" alt="down arrow" src="~/assets/themes/default/down.svg" loading="eager" />
+      <img ref="up" class="hidden" alt="up arrow" src="~/assets/themes/default/up.svg" loading="eager" />
+      <img ref="right" class="hidden" alt="right arrow" src="~/assets/themes/default/right.svg" loading="eager" />
+      <img ref="hold" class="hidden" alt="hold arrow" src="~/assets/themes/default/hold.svg" loading="eager" />
+      <img ref="roll" class="hidden" alt="roll arrow" src="~/assets/themes/default/roll.svg" loading="eager" />
 
-      <img
-        ref="hold"
-        class="hidden"
-        alt="hold arrow"
-        src="~/assets/themes/default/hold.svg"
-        loading="eager"
-      />
-      <img
-        ref="roll"
-        class="hidden"
-        alt="roll arrow"
-        src="~/assets/themes/default/roll.svg"
-        loading="eager"
-      />
-
-      <canvas
-        class="track-canvas"
-        ref="canvas"
-        :width="canvasWidth"
-        :height="canvasHeight"
-      ></canvas>
+      <canvas class="track-canvas" ref="canvas" :width="canvasWidth" :height="canvasHeight"></canvas>
+      
       <audio
         ref="gameAudio"
         :src="chart.songUrl"
         @canplaythrough="audioReady = true"
-        @play="playing = true"
+        @play="game.start()"
         preload="auto"
       ></audio>
 
-      <div
-        class="w-full h-full relative p-10 font-extrabold text-2xl text-white"
-      >
+      <div class="w-full h-full relative p-10 font-extrabold text-2xl text-white">
         <button
-          v-show="!playing"
+          v-show="!game.isPlaying"
           class="rounded border-solid border-2 border-white px-5"
-          @click="gameAudio?.play()"
+          @click="startGame"
         >
           Start
         </button>
-        <h1 v-show="playing">Score: {{ score }}</h1>
+        <h1 v-show="game.isPlaying">Score: {{ score }} | Combo: {{ combo }} | {{ lastJudgement }}</h1>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import calculateTails from "~/game/calculateTails";
+import { ref, computed, watch, onMounted, onBeforeUnmount, reactive } from 'vue';
 import { drawTails, drawArrows } from "~/game/drawing";
 import type { Chart } from "~/models/charts";
+import { InputHandler } from "~/game/input";
+import { RhythmGame } from "~/game/engine";
+import { Judgement } from "~/game/scoring";
 
 const props = defineProps<{
   chart: Chart;
   difficulty: number;
 }>();
 
+// Canvas & Rendering State
 const canvasWidth = ref(1920);
 const canvasHeight = ref(1000);
 const canvasContext = ref<CanvasRenderingContext2D | null>(null);
 const animationRequest = ref<number | null>(null);
-const audioReady = ref(false);
-
-const playing = ref(false);
-const bpm = ref(100);
-const currentBeat = ref(0);
-const nextBeat = ref(0);
-const chartIndex = ref(0);
 const lastFrameTime = ref(0);
-const stopUntil = ref(0);
-
-const tailMeta = ref<{ active: boolean; available: boolean }[]>([]);
-const upLast = ref(false);
-const downLast = ref(false);
-const leftLast = ref(false);
-const rightLast = ref(false);
-const upStep = ref(false);
-const downStep = ref(false);
-const leftStep = ref(false);
-const rightStep = ref(false);
-
 const scrollSpeed = ref(150);
-const marveleousRange = ref(1);
-const excellentRange = ref(5);
-const greatRange = ref(10);
-const goodRange = ref(25);
 
+// Audio
+const audioReady = ref(false);
+const gameAudio = ref<HTMLAudioElement | null>(null);
+
+// Game Engine
+const game = reactive(new RhythmGame());
+const inputHandler = ref(new InputHandler());
+
+// Reactive UI State (Synced via events)
 const score = ref(0);
 const combo = ref(0);
+const lastJudgement = ref<string | null>(null);
 
-// Template refs
+// Template Refs
 const left = ref<HTMLImageElement | null>(null);
 const down = ref<HTMLImageElement | null>(null);
 const up = ref<HTMLImageElement | null>(null);
@@ -134,7 +82,6 @@ const right = ref<HTMLImageElement | null>(null);
 const hold = ref<HTMLImageElement | null>(null);
 const roll = ref<HTMLImageElement | null>(null);
 const canvas = ref<HTMLCanvasElement | null>(null);
-const gameAudio = ref<HTMLAudioElement | null>(null);
 
 const icons = computed(() => ({
   up: up.value as HTMLImageElement,
@@ -145,57 +92,104 @@ const icons = computed(() => ({
   roll: roll.value as HTMLImageElement,
 }));
 
-const notes = computed(() => {
-  return props.chart.difficulties[props.difficulty].notes.sort(
-    (a, b) => a.beat - b.beat
-  );
+// --- Initialization ---
+
+function loadGame() {
+  game.loadChart(props.chart, props.difficulty);
+  // Reset local UI state
+  score.value = 0;
+  combo.value = 0;
+  lastJudgement.value = null;
+}
+
+// --- Event Listeners ---
+// These keep the Vue reactive state in sync with the Game Engine
+game.on("hit", (data) => {
+  lastJudgement.value = data.judgement;
 });
 
-const tails = computed(() => {
-  return calculateTails(notes.value);
+game.on("miss", (data) => {
+  lastJudgement.value = Judgement.MISS;
 });
 
-function mainRenderLoop(deltaMs: number) {
-  animationRequest.value = requestAnimationFrame((time) => {
-    const delta = time - lastFrameTime.value;
-    lastFrameTime.value = time;
-    mainRenderLoop(delta);
-  });
+game.on("scoreChange", (data) => {
+  score.value = Math.floor(data.score);
+});
 
+game.on("comboChange", (data) => {
+  combo.value = data.combo;
+});
+
+game.on("finished", () => {
+    // Handle level completion
+    console.log("Level Finished");
+});
+
+game.on("stop", (data) => {
+    // Could show a UI indicator for STOP
+});
+
+// --- Game Loop ---
+
+function startGame() {
+    if (gameAudio.value) {
+        gameAudio.value.currentTime = 0;
+        gameAudio.value.play();
+    }
+}
+
+function mainRenderLoop(time: number) {
+  animationRequest.value = requestAnimationFrame(mainRenderLoop);
+  
+  if (!lastFrameTime.value) lastFrameTime.value = time;
+  const delta = time - lastFrameTime.value;
+  lastFrameTime.value = time;
+
+  // Clear
   clearCanvas();
   if (!canvasContext.value) return;
 
-  canvasContext.value.scale(
-    window.devicePixelRatio,
-    window.devicePixelRatio
-  );
+  canvasContext.value.scale(window.devicePixelRatio, window.devicePixelRatio);
   drawUI();
 
-  if (playing.value) {
-    incrementBeat(deltaMs);
-    canvasContext.value.globalAlpha = 1;
-    checkInputs();
-    drawTails(
-      canvasContext.value,
-      icons.value,
-      tails.value,
-      tailMeta.value,
-      scrollSpeed.value,
-      currentBeat.value
-    );
-    drawArrows(
-      canvasContext.value,
-      icons.value,
-      notes.value,
-      scrollSpeed.value,
-      currentBeat.value
-    );
+  if (game.isPlaying) {
+      // Input Interface for Holds (passed to engine updates)
+      const inputInterface = {
+          isDown: (track: string) => inputHandler.value.isDown(track)
+      };
+
+      // Update Engine
+      game.update(delta, time, inputInterface);
+
+      // Draw active elements
+      canvasContext.value.globalAlpha = 1;
+      
+      // We only draw notes that haven't been fully processed (hit/missed)
+      // Actually, engine noteStates tracks this.
+      const activeNotes = game.notes.filter((n, i) => !game.noteStates[i].hit && !game.noteStates[i].missed);
+      
+      drawTails(
+        canvasContext.value,
+        icons.value,
+        game.tails,
+        game.tailMeta,
+        scrollSpeed.value,
+        game.currentBeat
+      );
+
+      drawArrows(
+        canvasContext.value,
+        icons.value,
+        activeNotes,
+        scrollSpeed.value,
+        game.currentBeat
+      );
   }
-  canvasContext.value.scale(
-    1 / window.devicePixelRatio,
-    1 / window.devicePixelRatio
-  );
+
+  canvasContext.value.scale(1 / window.devicePixelRatio, 1 / window.devicePixelRatio);
 }
+
+// --- Helpers ---
 
 function clearCanvas() {
   if (canvasContext.value === null && canvas.value) {
@@ -217,81 +211,61 @@ function drawUI() {
   canvasContext.value.drawImage(icons.value.right, 500, 50, 100, 100);
 }
 
-function incrementBeat(deltaMs: number) {
-  if (currentBeat.value >= nextBeat.value) {
-    while (true) {
-      const note = notes.value[chartIndex.value++];
-
-      if (note === undefined) {
-        console.info("End of song");
-        completeLevel();
-        break;
-      }
-
-      if (note.type === "OFFSET") {
-        currentBeat.value = currentBeat.value + note.value;
-        console.info("Adjusting offset");
-        break;
-      } else if (note.type === "SET_BPM") {
-        bpm.value = note.value;
-        console.info("Adjusting BPM");
-      } else if (note.type === "STOP") {
-        console.info("STOPing");
-        stopUntil.value = lastFrameTime.value + note.value * 1000;
-      } else if (note.type === "TRACK_VALUE") {
-        nextBeat.value = nextBeat.value + note.value;
-        break;
-      }
-    }
-  }
-
-  if (stopUntil.value <= lastFrameTime.value) {
-    const bpmInMillis = bpm.value / 60 / 1000;
-    const beatChange = bpmInMillis * deltaMs;
-    currentBeat.value = currentBeat.value + beatChange;
-  }
+function handleInput(action: string) {
+    game.handleInput(action);
 }
 
-function checkInputs() {
-  // Placeholder
-}
+// --- Watchers ---
 
-function completeLevel() {
-  playing.value = false;
+watch(() => props.chart, () => {
+  loadGame();
   if (gameAudio.value) {
       gameAudio.value.pause();
       gameAudio.value.currentTime = 0;
   }
-  bpm.value = 100;
-  currentBeat.value = 0;
-  nextBeat.value = 0;
-  chartIndex.value = 0;
-  score.value = 0;
-}
-
-watch(tails, () => {
-  tailMeta.value = tails.value.map(() => ({
-    active: true,
-    available: true,
-  }));
-});
-
-watch(() => props.chart, () => {
-  completeLevel();
-});
+}, { immediate: true });
 
 watch(() => props.difficulty, () => {
-  completeLevel();
+  loadGame();
+  if (gameAudio.value) {
+      gameAudio.value.pause();
+      gameAudio.value.currentTime = 0;
+  }
 });
 
+// --- Lifecycle ---
+
 onMounted(() => {
-  mainRenderLoop(0);
+  animationRequest.value = requestAnimationFrame(mainRenderLoop);
+  
+  inputHandler.value.start(
+    (action) => {
+      // On Press
+      switch(action) {
+        case "left": left.value?.setAttribute("style", "filter: brightness(0.5)"); handleInput("left"); break;
+        case "down": down.value?.setAttribute("style", "filter: brightness(0.5)"); handleInput("down"); break;
+        case "up": up.value?.setAttribute("style", "filter: brightness(0.5)"); handleInput("up"); break;
+        case "right": right.value?.setAttribute("style", "filter: brightness(0.5)"); handleInput("right"); break;
+      }
+    },
+    (action) => {
+      // On Release
+      switch(action) {
+        case "left": left.value?.setAttribute("style", "filter: none"); break;
+        case "down": down.value?.setAttribute("style", "filter: none"); break;
+        case "up": up.value?.setAttribute("style", "filter: none"); break;
+        case "right": right.value?.setAttribute("style", "filter: none"); break;
+      }
+    }
+  );
 });
 
 onBeforeUnmount(() => {
   if (animationRequest.value) {
     cancelAnimationFrame(animationRequest.value);
   }
+  inputHandler.value.stop();
+  game.stop();
 });
 </script>
 

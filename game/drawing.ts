@@ -22,7 +22,8 @@ export function drawTails(
   scrollSpeed: number,
   currentBeat: number
 ) {
-  tails.forEach((tail) => {
+  tails.forEach((tail, index) => {
+    const meta = tailMeta[index];
     const offset = tail.beat * scrollSpeed;
     const withTime = offset - currentBeat * scrollSpeed;
     const y = 50 + withTime;
@@ -31,6 +32,10 @@ export function drawTails(
     let icon = icons.hold;
     if (tail.type === "ROLL_HEAD") {
       icon = icons.roll;
+    }
+
+    if (meta && !meta.active) {
+       context.globalAlpha = 0.5;
     }
 
     switch (tail.track) {
@@ -47,6 +52,7 @@ export function drawTails(
         context.drawImage(icon, 500, y + 50, 100, height);
         break;
     }
+    context.globalAlpha = 1.0; // Reset
   });
 }
 
