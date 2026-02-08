@@ -98,7 +98,7 @@ async function loadDefaultCharts() {
 
       charts.value.push({
         chart: parsedChart,
-        path: '',
+        path: info.path,
         format: info.format,
       });
     } catch (e) {
