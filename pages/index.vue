@@ -1,5 +1,8 @@
 <template>
   <div class="relative">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik+Puddles&display=swap" rel="stylesheet">
     <Level
       class="fixed top-0 bottom-0 left-0 right-0"
       v-if="chart"
@@ -7,29 +10,12 @@
       :difficulty="difficulty"
     ></Level>
 
-    <div
-      class="fixed top-0 bottom-0 right-0 overflow-y-auto p-2 text-sm text-white"
-      style="background: rgba(34, 34, 34, 0.5)"
-    >
-      <label
-        for="chart-picker"
-        class="rounded border-solid border-2 px-5 cursor-pointer"
-      >
-        Load Charts
-      </label>
-      <input
-        id="chart-picker"
-        type="file"
-        webkitdirectory
-        directory
-        @change="uploadCharts"
-        class="hidden"
-      />
-      <div v-for="chart in charts" :key="chart.path" class="my-2">
-        <hr />
-        <div class="font-semibold">
+    <div v-show="!chart" id="tracks" class="fixed top-0 bottom-0 left-0 right-0 m-auto w-fit h-fit">
+      <h1>Spider Karaoke</h1>
+      <div v-for="chart in charts" :key="chart.path" class="py-2">
+        <h2 class="font-semibold">
           {{ chart.chart.title }}
-        </div>
+        </h2>
         <div class="flex gap-1">
           <span
             class="text-xs cursor-pointer"
@@ -41,6 +27,20 @@
           </span>
         </div>
       </div>
+      <label
+          for="chart-picker"
+          class="block w-fit rounded border-solid border-2 px-5 cursor-pointer"
+      >
+        Load Charts (dev tool)
+      </label>
+      <input
+          id="chart-picker"
+          type="file"
+          webkitdirectory
+          directory
+          @change="uploadCharts"
+          class="hidden"
+      />
     </div>
   </div>
 </template>
@@ -215,4 +215,34 @@ function openChart(selected: ChartFile, difficultyIndex: number) {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+#tracks {
+  color: white;
+}
+
+#tracks h1 {
+  font-size: 64px;
+  font-family: "Rubik Puddles", sans-serif;
+}
+
+#tracks h2 {
+  font-size: 32px;
+}
+
+#tracks span {
+  font-size: 24px;
+}
+
+#tracks span:hover {
+  color: darkred;
+}
+
+#tracks hr {
+  margin: 16px 0;
+}
+
+#tracks label {
+  margin-top: 32px;
+  font-size: 12px;
+}
+</style>
