@@ -8,15 +8,15 @@
 #GENRE:J-Pop / Electronic;
 #ORIGIN:;
 #CREDIT:Chart created by AI;
-#BANNER:/chart/Suki Suki Daisuki/banner.jpg;
-#BACKGROUND:/chart/Suki Suki Daisuki/banner.jpg;
+#BANNER:banner.jpg;
+#BACKGROUND:banner.jpg;
 #PREVIEWVID:;
 #JACKET:;
 #CDIMAGE:;
 #DISCIMAGE:;
 #LYRICSPATH:;
 #CDTITLE:;
-#MUSIC:/chart/Suki Suki Daisuki/song.mp3;
+#MUSIC:song.mp3;
 #OFFSET:-0.050;
 #SAMPLESTART:52.000;
 #SAMPLELENGTH:12.000;
