@@ -6,8 +6,12 @@ export async function convertFromSM(inputFile: File): Promise<Chart> {
   rootPath.pop();
   rootPath = rootPath.join("/") + "/";
 
+  const text = await inputFile.text();
+  return parseSM(text, rootPath);
+}
+
+export function parseSM(file: string, rootPath: string): Chart {
   const commentRegex = /(\s*)\/\/(.*)/;
-  let file = await inputFile.text();
   while (file.match(commentRegex) !== null) {
     file = file.replace(commentRegex, "");
   }

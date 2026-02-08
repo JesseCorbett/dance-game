@@ -46,9 +46,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
-import { convertFromSSC } from "~/conversion/ssc";
-import { convertFromSM } from "~/conversion/sm";
+import { ref, onMounted } from "vue";
+import { convertFromSSC, parseSSC } from "~/conversion/ssc";
+import { convertFromSM, parseSM } from "~/conversion/sm";
 import type { Chart } from "~/models/charts";
 
 const chart = ref<Chart | null>(null);
@@ -62,6 +62,50 @@ type ChartFile = {
 
 const charts = ref<ChartFile[]>([]);
 let files = null as FileList | null;
+
+onMounted(() => {
+  loadDefaultCharts();
+});
+
+async function loadDefaultCharts() {
+  const defaultCharts = [
+    {
+      name: "Espresso",
+      path: "/chart/Espresso/",
+      file: "chart.ssc",
+      format: "ssc" as const,
+    },
+    {
+      name: "Suki Suki Daisuki",
+      path: "/chart/Suki Suki Daisuki/",
+      file: "chart.ssc",
+      format: "ssc" as const,
+    },
+  ];
+
+  for (const info of defaultCharts) {
+    try {
+      const response = await fetch(info.path + info.file);
+      const text = await response.text();
+      let parsedChart: Chart;
+
+      if (info.format === "ssc") {
+        parsedChart = parseSSC(text, info.path);
+      } else {
+        // Fallback or expansion for sm if needed
+        parsedChart = parseSM(text, info.path);
+      }
+
+      charts.value.push({
+        chart: parsedChart,
+        path: info.path,
+        format: info.format,
+      });
+    } catch (e) {
+      console.error(`Failed to load default chart ${info.name}`, e);
+    }
+  }
+}
 
 async function uploadCharts(event: Event) {
   charts.value = [];

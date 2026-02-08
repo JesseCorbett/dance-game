@@ -6,8 +6,12 @@ export async function convertFromSSC(inputFile: File): Promise<Chart> {
   rootPath.pop();
   rootPath = rootPath.join("/") + "/";
 
+  const text = await inputFile.text();
+  return parseSSC(text, rootPath);
+}
+
+export function parseSSC(file: string, rootPath: string): Chart {
   const commentRegex = /(\s*)\/\/(.*)/;
-  let file = await inputFile.text();
   while (file.match(commentRegex) !== null) {
     file = file.replace(commentRegex, "");
   }
