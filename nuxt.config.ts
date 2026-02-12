@@ -1,9 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  compatibilityDate: '2026-02-11',
   ssr: false,
-  devtools: { enabled: true },
 
-  modules: ["@pinia/nuxt", "@vueuse/nuxt", "@nuxtjs/tailwindcss"],
+  modules: ["@pinia/nuxt", "@vueuse/nuxt", '@nuxtjs/tailwindcss'],
 
   app: {
     baseURL: "/",

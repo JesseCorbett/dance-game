@@ -3,6 +3,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik+Puddles&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <Level
       class="fixed top-0 bottom-0 left-0 right-0"
       v-if="chart"
@@ -10,29 +11,45 @@
       :difficulty="difficulty"
     ></Level>
 
-    <div v-show="!chart" id="tracks" class="fixed top-0 bottom-0 left-0 right-0 m-auto w-fit h-fit">
-      <h1>Spider Karaoke</h1>
-      <div v-for="chart in charts" :key="chart.path" class="py-2">
-        <h2 class="font-semibold">
-          {{ chart.chart.title }}
-        </h2>
-        <div class="flex gap-1">
-          <span
-            class="text-xs cursor-pointer"
-            v-for="(diff, idx) in chart.chart.difficulties"
-            :key="diff.label"
-            @click="openChart(chart, idx)"
+    <div v-show="!chart" id="tracks" class="fixed top-0 bottom-0 left-0 right-0 overflow-y-auto custom-scrollbar">
+      <div class="min-h-full flex flex-col items-center justify-center py-10">
+        <h1 class="mb-8 text-center drop-shadow-[0_0_10px_rgba(224,214,255,0.5)]">Spider Karaoke</h1>
+        
+        <div class="w-full max-w-md px-4 space-y-4">
+          <div v-for="chart in charts" :key="chart.path" 
+               class="chart-card bg-gomi-web backdrop-blur-sm border border-gomi-primary/20 rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:bg-gomi-primary/10 hover:border-gomi-accent/50 group relative overflow-hidden">
+            
+            <!-- Spider web corner decoration -->
+            <div class="absolute -top-6 -right-6 w-12 h-12 border border-gomi-primary/10 rounded-full scale-[2] group-hover:border-gomi-accent/20 transition-colors"></div>
+            <div class="absolute -top-4 -right-4 w-8 h-8 border border-gomi-primary/10 rounded-full scale-[2]"></div>
+
+            <h2 class="font-bold text-xl text-gomi-primary mb-2 relaltive z-10 group-hover:text-gomi-accent transition-colors">
+              {{ chart.chart.title }}
+            </h2>
+            
+            <div class="flex flex-wrap gap-2 relative z-10">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-semibold bg-gomi-dark/50 text-gomi-primary border border-gomi-primary/20 cursor-pointer hover:bg-gomi-accent hover:text-gomi-bg hover:border-gomi-accent transition-all duration-200"
+                v-for="(diff, idx) in chart.chart.difficulties"
+                :key="diff.label"
+                @click="openChart(chart, idx)"
+              >
+                {{ diff.label || 'Default' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 text-center">
+          <label
+              for="chart-picker"
+              class="inline-block px-6 py-2 rounded-full border border-gomi-primary/30 text-gomi-primary/70 text-sm hover:text-gomi-accent hover:border-gomi-accent hover:bg-gomi-accent/10 transition-all cursor-pointer"
           >
-            {{ diff.label || 'Default' }}
-          </span>
+            Load Charts (dev tool)
+          </label>
         </div>
       </div>
-      <label
-          for="chart-picker"
-          class="block w-fit rounded border-solid border-2 px-5 cursor-pointer"
-      >
-        Load Charts (dev tool)
-      </label>
+
       <input
           id="chart-picker"
           type="file"
@@ -41,6 +58,11 @@
           @change="uploadCharts"
           class="hidden"
       />
+      
+      <!-- Ambient background effects -->
+      <div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 bg-[radial-gradient(circle_at_50%_50%,rgba(26,16,37,0)_0%,rgba(18,11,26,0.8)_100%)]"></div>
+      <div class="fixed bottom-0 right-0 w-[500px] h-[500px] bg-gomi-accent/5 blur-[120px] rounded-full pointer-events-none -z-20"></div>
+      <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-gomi-primary/5 blur-[120px] rounded-full pointer-events-none -z-20"></div>
     </div>
   </div>
 </template>
@@ -216,33 +238,33 @@ function openChart(selected: ChartFile, difficultyIndex: number) {
 </script>
 
 <style scoped>
-#tracks {
-  color: white;
+/* Base Styles */
+.relative {
+  background-color: #1a1025; /* Fallback for gomi-bg */
+  min-height: 100vh;
+  color: #e0d6ff; /* Fallback for gomi-primary */
+  font-family: 'Quicksand', sans-serif;
 }
 
 #tracks h1 {
   font-size: 64px;
   font-family: "Rubik Puddles", sans-serif;
+  color: #e0d6ff;
+  letter-spacing: 2px;
 }
 
-#tracks h2 {
-  font-size: 32px;
+/* Custom Scrollbar for the track list */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
 }
-
-#tracks span {
-  font-size: 24px;
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(26, 16, 37, 0.5);
 }
-
-#tracks span:hover {
-  color: darkred;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(224, 214, 255, 0.2);
+  border-radius: 4px;
 }
-
-#tracks hr {
-  margin: 16px 0;
-}
-
-#tracks label {
-  margin-top: 32px;
-  font-size: 12px;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 107, 107, 0.4);
 }
 </style>
