@@ -1,35 +1,48 @@
 <template>
-  <div class="relative">
+  <div class="relative home-root">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik+Puddles&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <Level
-      class="fixed top-0 bottom-0 left-0 right-0"
+      class="fixed top-0 bottom-0 left-0 right-0 w-full h-full z-50 bg-gomi-bg"
       v-if="chart"
       :chart="chart"
       :difficulty="difficulty"
+      @back="chart = null"
     ></Level>
 
     <div v-show="!chart" id="tracks" class="fixed top-0 bottom-0 left-0 right-0 overflow-y-auto custom-scrollbar">
-      <div class="min-h-full flex flex-col items-center justify-center py-10">
-        <h1 class="mb-8 text-center drop-shadow-[0_0_10px_rgba(224,214,255,0.5)]">Spider Karaoke</h1>
+      <div class="min-h-full flex flex-col items-center justify-center py-6 relative z-10">
+        <h1 class="mb-6 text-center drop-shadow-[0_0_15px_rgba(224,214,255,0.6)] text-6xl md:text-7xl animate-pulse-slow">
+          <span class="text-gomi-primary">Spider</span> <span class="text-gomi-accent">Karaoke</span>
+        </h1>
         
-        <div class="w-full max-w-md px-4 space-y-4">
+        <div class="flex flex-col md:flex-row gap-6 items-start justify-center w-full max-w-6xl px-4">
+          <!-- Game Instructions -->
+          <div class="w-full md:w-1/3 max-w-sm order-2 md:order-1">
+             <HowToPlay />
+          </div>
+
+          <!-- Chart List -->
+          <div class="w-full md:w-1/2 space-y-3 order-1 md:order-2">
           <div v-for="chart in charts" :key="chart.path" 
-               class="chart-card bg-gomi-web backdrop-blur-sm border border-gomi-primary/20 rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:bg-gomi-primary/10 hover:border-gomi-accent/50 group relative overflow-hidden">
+               class="chart-card bg-gomi-dark/60 backdrop-blur-md border border-gomi-primary/20 rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:bg-gomi-primary/5 hover:border-gomi-accent/60 group relative overflow-hidden shadow-lg hover:shadow-gomi-accent/20">
             
             <!-- Spider web corner decoration -->
-            <div class="absolute -top-6 -right-6 w-12 h-12 border border-gomi-primary/10 rounded-full scale-[2] group-hover:border-gomi-accent/20 transition-colors"></div>
-            <div class="absolute -top-4 -right-4 w-8 h-8 border border-gomi-primary/10 rounded-full scale-[2]"></div>
+            <div class="absolute -top-10 -right-10 w-20 h-20 border-2 border-gomi-primary/10 rounded-full scale-[2] group-hover:border-gomi-accent/30 transition-colors"></div>
+            <div class="absolute -top-6 -right-6 w-12 h-12 border-2 border-gomi-primary/10 rounded-full scale-[2]"></div>
+            
+            <!-- Tiny spider icon -->
+            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 text-lg">🕷️</div>
 
-            <h2 class="font-bold text-xl text-gomi-primary mb-2 relaltive z-10 group-hover:text-gomi-accent transition-colors">
+            <h2 class="font-bold text-2xl text-gomi-primary mb-3 relative z-10 group-hover:text-gomi-accent transition-colors drop-shadow-sm">
               {{ chart.chart.title }}
             </h2>
             
             <div class="flex flex-wrap gap-2 relative z-10">
               <span
-                class="px-3 py-1 rounded-full text-xs font-semibold bg-gomi-dark/50 text-gomi-primary border border-gomi-primary/20 cursor-pointer hover:bg-gomi-accent hover:text-gomi-bg hover:border-gomi-accent transition-all duration-200"
+                class="px-3 py-1.5 rounded-lg text-sm font-bold bg-gomi-bg/80 text-gomi-primary border border-gomi-primary/20 cursor-pointer hover:bg-gomi-accent hover:text-gomi-dark hover:border-gomi-accent transition-all duration-200 shadow-sm"
                 v-for="(diff, idx) in chart.chart.difficulties"
                 :key="diff.label"
                 @click="openChart(chart, idx)"
@@ -38,6 +51,7 @@
               </span>
             </div>
           </div>
+        </div>
         </div>
 
         <div class="mt-12 text-center">
@@ -59,10 +73,20 @@
           class="hidden"
       />
       
+      
+      
+      <!-- Hanging Spider Decorations -->
+      <div class="fixed -top-20 left-[5%] w-[1px] h-32 bg-gomi-primary/30 animate-swing">
+        <div class="absolute bottom-0 -left-3 text-2xl">🕷️</div>
+      </div>
+      <div class="fixed -top-10 right-[10%] w-[1px] h-24 bg-gomi-primary/30 animate-swing-delayed">
+        <div class="absolute bottom-0 -left-3 text-xl opacity-70">🕷️</div>
+      </div>
+
       <!-- Ambient background effects -->
-      <div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 bg-[radial-gradient(circle_at_50%_50%,rgba(26,16,37,0)_0%,rgba(18,11,26,0.8)_100%)]"></div>
-      <div class="fixed bottom-0 right-0 w-[500px] h-[500px] bg-gomi-accent/5 blur-[120px] rounded-full pointer-events-none -z-20"></div>
-      <div class="fixed top-0 left-0 w-[500px] h-[500px] bg-gomi-primary/5 blur-[120px] rounded-full pointer-events-none -z-20"></div>
+      <div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 bg-[radial-gradient(circle_at_50%_30%,rgba(40,20,60,1)_0%,rgba(18,11,26,1)_80%)]"></div>
+      <div class="fixed bottom-0 right-0 w-[600px] h-[600px] bg-gomi-accent/10 blur-[150px] rounded-full pointer-events-none -z-20 animate-pulse-slow"></div>
+      <div class="fixed top-0 left-0 w-[600px] h-[600px] bg-gomi-primary/10 blur-[150px] rounded-full pointer-events-none -z-20"></div>
     </div>
   </div>
 </template>
@@ -239,7 +263,7 @@ function openChart(selected: ChartFile, difficultyIndex: number) {
 
 <style scoped>
 /* Base Styles */
-.relative {
+.home-root {
   background-color: #1a1025; /* Fallback for gomi-bg */
   min-height: 100vh;
   color: #e0d6ff; /* Fallback for gomi-primary */
@@ -247,10 +271,26 @@ function openChart(selected: ChartFile, difficultyIndex: number) {
 }
 
 #tracks h1 {
-  font-size: 64px;
   font-family: "Rubik Puddles", sans-serif;
-  color: #e0d6ff;
-  letter-spacing: 2px;
+  letter-spacing: 4px;
+}
+
+.animate-pulse-slow {
+  animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-swing {
+  animation: swing 3s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+.animate-swing-delayed {
+  animation: swing 4s ease-in-out infinite alternate-reverse;
+  transform-origin: top center;
+}
+
+@keyframes swing {
+  0% { transform: rotate(5deg); }
+  100% { transform: rotate(-5deg); }
 }
 
 /* Custom Scrollbar for the track list */
