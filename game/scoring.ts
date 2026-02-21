@@ -56,9 +56,13 @@ export class ScoringSystem {
   }
 
   addHit(judgement: Judgement) {
-    this.combo++;
-    if (this.combo > this.maxCombo) {
-      this.maxCombo = this.combo;
+    if (judgement === Judgement.BOO) {
+      this.combo = 0;
+    } else {
+      this.combo++;
+      if (this.combo > this.maxCombo) {
+        this.maxCombo = this.combo;
+      }
     }
     this.judgements.set(judgement, (this.judgements.get(judgement) || 0) + 1);
 
@@ -82,8 +86,8 @@ export class ScoringSystem {
 
   droppedHold() {
     // Optional: Break combo or just stop scoring?
-    // For now, let's just not add score. Classic SM doesn't always break combo on dropped hold, 
-    // but usually counts as NG at the end. 
+    // For now, let's just not add score. Classic SM doesn't always break combo on dropped hold,
+    // but usually counts as NG at the end.
     // We will just not score for now.
   }
 }

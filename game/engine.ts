@@ -59,8 +59,10 @@ export class RhythmGame {
       return;
     }
 
-    // Sort notes
-    this.notes = [...difficulty.notes].sort((a, b) => a.beat - b.beat);
+    // Sort notes and deep copy the tracks objects so we can mutate them during gameplay
+    this.notes = difficulty.notes
+      .map(n => ({ ...n, tracks: n.tracks ? { ...n.tracks } : undefined }))
+      .sort((a, b) => a.beat - b.beat);
     this.noteStates = new Array(this.notes.length).fill(null).map(() => ({ hit: false, missed: false }));
 
     // Prepare tails
@@ -236,15 +238,22 @@ export class RhythmGame {
         // If past the MISS window
         if (timeDiffMs < -this.config.missWindow) {
            // Check if hittable
-           const tracks = note.tracks;
-           // @ts-ignore
-           const hasStep = tracks && Object.values(tracks).some(t => ["STEP", "HOLD_HEAD", "ROLL_HEAD"].includes(t));
-           
-           this.noteStates[i].missed = true;
+         const tracks = note.tracks;
+         
+         this.noteStates[i].missed = true;
 
-           if (hasStep) {
+         if (tracks) {
+           let missedCount = 0;
+           Object.values(tracks).forEach(t => {
+             if (t && ["STEP", "HOLD_HEAD", "ROLL_HEAD"].includes(t as string)) missedCount++;
+           });
+           
+           for (let m = 0; m < missedCount; m++) {
              this.scoring.addMiss();
              this.emit("miss", { cause: "timeout", noteIndex: i });
+           }
+           
+           if (missedCount > 0) {
              this.updateScoreState();
              
              // Visual Update for Tails?
@@ -268,6 +277,7 @@ export class RhythmGame {
              }
            }
         }
+      }
      });
   }
 
@@ -319,32 +329,78 @@ export class RhythmGame {
     if (!this.isPlaying) return;
 
     // 1. Check Note Hit
-    const noteIndex = this.notes.findIndex((n, i) => {
-        if (this.noteStates[i].hit || this.noteStates[i].missed) return false;
-        if (n.type !== "TRACK_VALUE" || !n.tracks) return false;
+    const msPerBeat = 60000 / this.bpm;
+    let noteIndex = -1;
+    let minAbsTimeDiffMs = Infinity;
+
+    // Find the closest valid note in time
+    this.notes.forEach((n, i) => {
+        if (this.noteStates[i].hit || this.noteStates[i].missed) return;
+        if (n.type !== "TRACK_VALUE" || !n.tracks) return;
         // @ts-ignore
         const trackValue = n.tracks[track];
-        return trackValue && ["STEP", "ROLL_HEAD", "HOLD_HEAD"].includes(trackValue);
+        if (trackValue && ["STEP", "ROLL_HEAD", "HOLD_HEAD"].includes(trackValue)) {
+            const beatDiff = n.beat - this.currentBeat;
+            const timeDiffMs = beatDiff * msPerBeat;
+            const absDiff = Math.abs(timeDiffMs);
+            const judgement = this.scoring.getJudgement(timeDiffMs);
+            
+            if (judgement && judgement !== Judgement.MISS) {
+                if (absDiff < minAbsTimeDiffMs) {
+                    minAbsTimeDiffMs = absDiff;
+                    noteIndex = i;
+                }
+            }
+        }
     });
 
     let hitNote = false;
 
     if (noteIndex !== -1) {
         const note = this.notes[noteIndex];
-        const msPerBeat = 60000 / this.bpm;
         const beatDiff = note.beat - this.currentBeat;
         const timeDiffMs = beatDiff * msPerBeat;
 
         const judgement = this.scoring.getJudgement(timeDiffMs);
-        if (judgement && judgement !== Judgement.MISS && judgement !== Judgement.BOO) {
-            // HIT
-            this.scoring.addHit(judgement);
-            this.noteStates[noteIndex].hit = true;
-            this.noteStates[noteIndex].judgement = judgement;
-            hitNote = true;
-            
-            this.emit("hit", { track, judgement, score: this.scoring.score });
-            this.updateScoreState();
+      if (judgement && judgement !== Judgement.MISS) {
+          // HIT
+          this.scoring.addHit(judgement);
+          
+          // Mark track as hit by removing it
+          // @ts-ignore
+          this.notes[noteIndex].tracks[track] = "NONE";
+          
+          // @ts-ignore
+          const leftOver = Object.values(this.notes[noteIndex].tracks).some(t => ["STEP", "ROLL_HEAD", "HOLD_HEAD"].includes(t));
+          if (!leftOver) {
+              this.noteStates[noteIndex].hit = true;
+              this.noteStates[noteIndex].judgement = judgement;
+          }
+          hitNote = true;
+          
+          this.emit("hit", { track, judgement, score: this.scoring.score });
+
+          // Also hit any exact duplicates on the same track to prevent unfair combo breaks
+          this.notes.forEach((n, i) => {
+              if (i !== noteIndex && n.beat === note.beat && !this.noteStates[i].hit && !this.noteStates[i].missed) {
+                  if (n.type === "TRACK_VALUE" && n.tracks) {
+                      // @ts-ignore
+                      const tVal = n.tracks[track];
+                      if (tVal && ["STEP", "ROLL_HEAD", "HOLD_HEAD"].includes(tVal)) {
+                          // @ts-ignore
+                          n.tracks[track] = "NONE";
+                          // @ts-ignore
+                          const remaining = Object.values(n.tracks).some(t => ["STEP", "ROLL_HEAD", "HOLD_HEAD"].includes(t));
+                          if (!remaining) {
+                              this.noteStates[i].hit = true;
+                              this.noteStates[i].judgement = judgement;
+                          }
+                      }
+                  }
+              }
+          });
+
+          this.updateScoreState();
             
             // If Head, mark tail active (visuals)
             // ... handled by default as active=true
