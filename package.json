@@ -20,6 +20,5 @@
   "dependencies": {
     "@pinia/nuxt": "^0.5.5",
     "@vueuse/nuxt": "^10.11.1"
-  },
-  "packageManager": "pnpm@10.30.2"
+  }
 }
