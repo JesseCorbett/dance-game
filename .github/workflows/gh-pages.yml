@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -21,6 +21,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          cache: true
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
